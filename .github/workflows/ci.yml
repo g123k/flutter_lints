@@ -19,7 +19,9 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test example/lib
       - run: dart analyze --fatal-infos lib test
       - run: dart test
-      - run: dart analyze --fatal-infos
+      # The example reports the plugin warnings on purpose (test/example_test.dart
+      # asserts every rule is among them): only errors fail the job here.
+      - run: dart analyze --no-fatal-warnings
         working-directory: example
       - run: dart pub publish --dry-run
 
