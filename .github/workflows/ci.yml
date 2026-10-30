@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The commands of the AGENTS.md "Commands" section. The example is a Flutter
+  # app, so the Flutter SDK (with its Dart SDK) is used for every step.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed lib test example/lib
+      - run: dart analyze --fatal-infos lib test
+      - run: dart test
+      - run: dart analyze --fatal-infos
+        working-directory: example
+      - run: dart pub publish --dry-run
+
+  # The test base imports private files of analyzer_plugin and analyzer_testing
+  # (see AGENTS.md): a newer resolvable version must break here, not on a
+  # contributor's machine.
+  latest-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: dart pub upgrade
+      - run: dart analyze --fatal-infos lib test
+      - run: dart test

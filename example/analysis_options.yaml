@@ -1,0 +1,10 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+
+# Adopters write `daad_lints: ^1.0.0` instead of the path.
+plugins:
+  daad_lints:
+    path: ../

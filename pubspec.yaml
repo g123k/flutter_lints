@@ -1,0 +1,20 @@
+name: daad_lints
+description: Analyzer plugin with Flutter lint rules and quick fixes
+version: 1.0.0
+repository: https://github.com/g123k/flutter_lints
+issue_tracker: https://github.com/g123k/flutter_lints/issues
+topics: [lints, linter, analyzer, flutter, l10n]
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  analyzer: ^14.4.0
+  analyzer_plugin: ^0.14.17
+  analysis_server_plugin: ^0.3.23
+
+dev_dependencies:
+  analyzer_testing: ^0.4.2
+  lints: ^6.0.0
+  test: ^1.32.0
+  test_reflective_loader: '>=0.4.0 <0.7.0'
