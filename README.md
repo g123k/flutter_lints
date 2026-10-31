@@ -2,23 +2,25 @@
 
 [![pub package](https://img.shields.io/pub/v/daad_lints.svg)](https://pub.dev/packages/daad_lints)
 
-An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) with thirteen lint rules for Flutter apps and packages: directional widgets for right-to-left layouts, member ordering, repeated `of(context)` calls, `MediaQuery.of(context)` rebuilds, French typography in the generated localization files, and hardcoded user-facing strings. Nine rules come with a quick fix, also available as "fix all in file". Every rule is reported as a `warning` and can be tuned or disabled per project.
+An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) for Flutter apps.
 
 | Rule | Checks | Quick fix |
 |------|--------|-----------|
 | `avoid_edge_insets_only` | `EdgeInsets.only`, `EdgeInsetsGeometry.only`, `.only(...)` | `EdgeInsetsDirectional.only` / `.directional(...)` |
-| `avoid_alignment` | `Alignment(x, y)`, `Alignment.topLeft`…, `AlignmentGeometry.xy` / `.topLeft`… | `AlignmentDirectional(start, y)`, `AlignmentDirectional.topStart`…, `.directional` / `.topStart`… |
+| `avoid_alignment` | `Alignment.topLeft`, `.topLeft` | `AlignmentDirectional.topStart`, `.topStart` |
 | `avoid_positioned` | `Positioned(...)` | `PositionedDirectional(...)` |
 | `super_key_last` | `const A({super.key, this.a})` | `const A({this.a, super.key})` |
 | `prefer_double_literals` | `SizedBox(height: 10)`, `double a = -1` | `SizedBox(height: 10.0)`, `double a = -1.0` |
 | `dispose_after_build` | `dispose()` declared before `build()` in a `State` | moves `dispose()` to the end of the class |
-| `field_ordering` | fields out of order | sorts them: `static const` / `static final`, other `static`, `final` instance, other instance fields |
-| `avoid_repeated_of_context` | `Theme.of(context)` called twice in `build` | `final ThemeData theme = Theme.of(context);`, then `theme` |
+| `field_ordering` | fields out of order | sorts them |
+| `avoid_repeated_of_context` | `Theme.of(context)` twice in `build` | a local `theme` variable |
 | `avoid_media_query_of` | `MediaQuery.of(context).size`, `MediaQuery.maybeOf(context)?.padding` | `MediaQuery.sizeOf(context)`, `MediaQuery.maybePaddingOf(context)` |
 | `avoid_hardcoded_strings` | `Text('Hello')`, `Tooltip(message: 'Save')` | none |
-| `french_no_break_space` | `'Bonjour !'`, `'Prix : 5 €'` (regular or no space before `?` `!` `;` `:` `€`) | none |
-| `french_straight_apostrophe` | `'l’été'` (typographic apostrophe U+2019) | none |
-| `french_hyphen_only` | `'Lun — Ven'` (em dash U+2014, en dash U+2013) | none |
+| `french_no_break_space` 🥖 | `'Bonjour !'`, `'Prix : 5 €'` (regular or no space before `?` `!` `;` `:` `€`) | none |
+| `french_straight_apostrophe` 🥖 | `'l’été'` (typographic apostrophe U+2019) | none |
+| `french_hyphen_only` 🥖 | `'Lun — Ven'` (em dash U+2014, en dash U+2013) | none |
+
+🥖 Only in the generated French localization files (`*_fr.dart`): fix the `.arb`, then regenerate.
 
 ## Installation
 
@@ -35,16 +37,11 @@ plugins:
   daad_lints: ^1.0.0
 ```
 
-Then restart the Dart analysis server (in VS Code: "Dart: Restart Analysis Server"; in IntelliJ / Android Studio: the Dart Analysis tool window's restart button). The analysis server caches the built plugin: restart it after any change to the `plugins` section and after a package upgrade.
-
-- The `plugins` section is **not inherited through `include:`**: in a workspace or a melos repository, every package that should be analyzed declares its own `plugins` section.
-- Analyzer plugins need Dart 3.10 or later; the package itself requires Dart `^3.13.2` (see `pubspec.yaml`).
-
 ## Rules
 
 ### `avoid_edge_insets_only`
 
-Left and right paddings do not flip in right-to-left layouts (Arabic, Hebrew): `EdgeInsetsDirectional` uses `start` / `end` and follows the text direction.
+`left` / `right` do not flip in right-to-left layouts: use `start` / `end`.
 
 ```dart
 // BAD
@@ -56,11 +53,11 @@ padding: const EdgeInsetsDirectional.only(start: 8.0, end: 16.0),
 padding: const .directional(bottom: 12.0),
 ```
 
-Quick fix: replaces the constructor and renames the arguments (`left` → `start`, `right` → `end`). Dot shorthands (`.only(...)`) keep their shorthand form (`.directional(...)`).
+Quick fix: replaces the constructor and renames the arguments.
 
 ### `avoid_alignment`
 
-`Alignment` is anchored to the left and right edges, `AlignmentDirectional` to the start and end edges.
+`AlignmentDirectional` follows the text direction, `Alignment` does not.
 
 ```dart
 // BAD
@@ -74,13 +71,13 @@ alignment: const AlignmentDirectional(-1.0, 0.0),
 alignment: .topStart,
 ```
 
-Not reported: `Alignment.lerp` (no directional equivalent) and the direction-agnostic `AlignmentGeometry` members (`.center`, `.topCenter`, `.bottomCenter`).
+Not reported: `Alignment.lerp` and the centered values (`.center`, `.topCenter`, `.bottomCenter`).
 
-Quick fix: replaces the class and the member name, keeping the dot-shorthand form.
+Quick fix: replaces the class and the member.
 
 ### `avoid_positioned`
 
-`Positioned` takes `left` / `right`; `PositionedDirectional` takes `start` / `end`.
+`PositionedDirectional` takes `start` / `end` instead of `left` / `right`.
 
 ```dart
 // BAD
@@ -90,13 +87,13 @@ Positioned(left: 8.0, top: 0.0, child: child)
 PositionedDirectional(start: 8.0, top: 0.0, child: child)
 ```
 
-Not reported: `Positioned.fill`, `Positioned.directional`, `Positioned.fromRect` and `Positioned.fromRelativeRect` (no directional equivalent).
+Not reported: `Positioned.fill`, `.directional`, `.fromRect` and `.fromRelativeRect`.
 
 Quick fix: replaces the constructor and renames the arguments.
 
 ### `super_key_last`
 
-`super.key` always comes last, so that the parameters a reader cares about come first.
+`super.key` comes last.
 
 ```dart
 // BAD
@@ -106,13 +103,13 @@ const MaskedValue({super.key, this.color = kPurple});
 const MaskedValue({this.color = kPurple, super.key});
 ```
 
-Not reported: `required super.key` (it would conflict with `always_put_required_named_parameters_first`) and a positional `super.key`.
+Not reported: `required super.key` and a positional `super.key`.
 
-Quick fix: moves `super.key` to the end of the parameter list.
+Quick fix: moves `super.key` last.
 
 ### `prefer_double_literals`
 
-A `double` written as an integer literal reads like an `int`: `10.0` says what it is.
+`10.0`, not `10`, where a `double` is expected.
 
 ```dart
 // BAD
@@ -124,15 +121,13 @@ const SizedBox(height: 10.0),
 double opacity = 1.0;
 ```
 
-Not reported: integer literals typed `int`, `num`, `Object` or `dynamic` (`x * 2`), and hexadecimal literals (`0x10.0` is not valid Dart).
-
-This rule contradicts the official `prefer_int_literals` rule: keep `prefer_int_literals` disabled when this rule is on.
+Disable `prefer_int_literals`: it says the opposite.
 
 Quick fix: appends `.0`.
 
 ### `dispose_after_build`
 
-In a `State`, `dispose()` reads better at the end of the class, after `build()`, mirroring the lifecycle.
+In a `State`, `dispose()` goes after `build()`.
 
 ```dart
 // BAD
@@ -154,13 +149,11 @@ class _MyState extends State<My> {
 }
 ```
 
-Generated files are not reported.
-
-Quick fix: moves `dispose()` to the end of the class, with its comments and annotations.
+Quick fix: moves `dispose()` to the end of the class.
 
 ### `field_ordering`
 
-Fields go in this order: `static const` and `static final` fields, other `static` fields, `final` instance fields (`late final` included), then other instance fields.
+Fields order: `static const` / `static final`, other `static`, `final`, then the others.
 
 ```dart
 // BAD
@@ -181,13 +174,11 @@ class Counter {
 }
 ```
 
-Not reported: the position of the fields relative to the constructor and the methods; generated files.
-
-Quick fix: sorts the fields. Not offered when the fields are mixed with other members (methods, getters, constructors): move them together first.
+Quick fix: sorts the fields, when they are not mixed with other members.
 
 ### `avoid_repeated_of_context`
 
-Each `Theme.of(context)` (or any static `of` / `maybeOf`) walks the widget tree again: in `build`, read it once into a local variable.
+Each `Theme.of(context)` walks the widget tree: in `build`, read it once.
 
 ```dart
 // BAD
@@ -206,13 +197,13 @@ Widget build(BuildContext context) {
 }
 ```
 
-Not reported: accessors other than `of` / `maybeOf` (`MediaQuery.sizeOf`), `MediaQuery.of` / `maybeOf` (left to [`avoid_media_query_of`](#avoid_media_query_of)), calls using another context (a nested `Builder`'s), calls inside closures or `assert`s (they do not run on each build), and generated files. Each repeated call is reported, with the others as context messages.
+Not reported: calls in closures or `assert`s, and `MediaQuery` (see [`avoid_media_query_of`](#avoid_media_query_of)).
 
-Quick fix: extracts the call into a local variable at the top of `build`. Not offered for an expression-bodied `build` (`=> ...`), or when the variable name is already used in `build`.
+Quick fix: extracts the call into a local variable.
 
 ### `avoid_media_query_of`
 
-`MediaQuery.of(context)` makes the widget depend on the whole `MediaQueryData`: it rebuilds when any property changes, eg: on each frame of the keyboard animation (`viewInsets`), even if it only reads the screen size. The dedicated accessors (`MediaQuery.sizeOf`, `MediaQuery.paddingOf`...) only depend on the property they read.
+`MediaQuery.of(context)` rebuilds the widget when any `MediaQuery` property changes (eg: on each frame of the keyboard animation). The dedicated accessors only depend on what they read.
 
 ```dart
 // BAD
@@ -224,25 +215,13 @@ final double width = MediaQuery.widthOf(context);
 final EdgeInsets? padding = MediaQuery.maybePaddingOf(context);
 ```
 
-Every `MediaQuery.of` / `maybeOf` call is reported, also outside `build` and in test code, including the ones using the whole object (`final MediaQueryData data = MediaQuery.of(context);`): read each property with its accessor instead. To only check that a `MediaQuery` is above the widget, use `MediaQuery.maybeSizeOf(context) != null` instead of `MediaQuery.maybeOf(context) != null`.
+Not reported: `copyWith`, `removePadding`, `removeViewInsets`, `removeViewPadding`, `removeDisplayFeatures` and `applyDisplayCornerRadii` on the result. To check that a `MediaQuery` exists, use `MediaQuery.maybeSizeOf(context) != null`.
 
-Not reported: the `MediaQueryData` methods with no accessor, called or torn off on the result (`copyWith`, `removePadding`, `removeViewInsets`, `removeViewPadding`, `removeDisplayFeatures`, `applyDisplayCornerRadii`). The `MediaQuery.removePadding(context: context, ...)` / `MediaQuery.removeViewInsets(...)` widgets are the usual alternative to them and to `MediaQuery(data: MediaQuery.of(context)...)`. Also not reported: the dedicated accessors, a `MediaQuery.of` tear-off, a `MediaQuery` class outside Flutter, and generated files.
-
-Quick fix: replaces the call and the property read with the accessor of the installed Flutter version: `MediaQuery.of(context).size` -> `MediaQuery.sizeOf(context)`, `.size.width` -> `MediaQuery.widthOf(context)` (`MediaQuery.sizeOf(context).width` without it), `MediaQuery.maybeOf(context)?.padding.top` -> `MediaQuery.maybePaddingOf(context)?.top`. Without a `MediaQuery` ancestor, `MediaQuery.of` throws but a few accessors return a default value: `textScalerOf` (`TextScaler.noScaling`), `platformBrightnessOf` (`Brightness.light`), `highContrastOf`, `onOffSwitchLabelsOf`, `boldTextOf` and `supportsAnnounceOf` (`false`). Every app has a `MediaQuery` above its widgets (`MaterialApp`, `WidgetsApp`...), so this only matters for a widget tested or built without one. Not offered for the whole object, a deprecated accessor (`textScaleFactor`), a property with only a `maybe` accessor (`letterSpacingOverride`) used with `of`, an extension getter, `MediaQuery.maybeOf(context)!.size`, a parenthesized call, a cascade on the call, or an index, a cascade or a `!` after a `MediaQuery.maybeOf(context)?.<property>` read.
+Quick fix: replaces the call with the accessor (`.size.width` → `MediaQuery.widthOf(context)`). Not offered when the whole object is used. Without a `MediaQuery` ancestor, `textScalerOf`, `platformBrightnessOf`, `highContrastOf`, `onOffSwitchLabelsOf`, `boldTextOf` and `supportsAnnounceOf` return a default value where `MediaQuery.of` throws.
 
 ### `avoid_hardcoded_strings`
 
-User-facing text belongs in the localization files: a string literal written in a widget constructor is never translated, and the French typography rules cannot check it.
-
-The rule reports a string literal (simple, adjacent, raw or interpolated) passed **directly** to the constructor of:
-
-- a Flutter `Widget` (any subclass, your own widgets and third-party ones included);
-- an `InlineSpan` (`TextSpan`…);
-- `InputDecoration`, `BottomNavigationBarItem` and `DropdownMenuEntry`, which are not widgets but hold user-visible strings.
-
-Only the arguments of a parameter declared `String` or `String?` are considered: a generic `T value` (`DropdownMenuItem<String>(value: 'us')`) or an `Object tag` (`Hero(tag: 'avatar')`) is not. The technical `String` parameters are skipped by name: `restorationId`, `identifier` (`Semantics`) and `semanticsIdentifier` (`Text`) on any class, since app widgets forward them; `name`, `package` (`Image.asset`) and `src` (`Image.network`) on Flutter's own classes only, so your `ProfileHeader(name: 'Guest')` is still reported. `semanticsLabel` / `semanticLabel` are reported: screen readers read them.
-
-A literal without any letter (`'42'`, `''`, `' - '`, `'v1.2.3'`) is not reported. A literal with no whitespace is treated as an identifier, a path, a URL or a file name, and not reported, when it contains `_`, a `/` `:` `#` followed by a non-space character, or a `.` between two letters or digits (`user_id`, `a/b`, `https://example.com`, `#tag`, `logo.png`).
+A string literal passed directly to a widget, a `TextSpan`, an `InputDecoration`, a `BottomNavigationBarItem` or a `DropdownMenuEntry` is never translated: move it to the localization files.
 
 ```dart
 // BAD
@@ -263,15 +242,21 @@ Hero(tag: 'avatar', child: avatar)
 Text(title)
 ```
 
-Not reported: a string that comes from a variable, a constant, a concatenation (`'Hello ' + name`), a method call (`'hello'.toUpperCase()`) or a constructor default value (`{this.label = 'Save'}`), a `Text('key').tr()` / `.plural()` call (easy_localization translates it in place), a nested widget's own literal (`ElevatedButton(child: Text('OK'))` reports the `Text` only), generated files, and test files (`test/`, `integration_test/`, `test_driver/`, `testing/`, or any `*_test.dart`).
+Not reported: literals without a letter (`'42'`), identifiers, paths and URLs (`user_id`, `logo.png`), technical parameters (`restorationId`, `Hero` tag), variables and constants, `'key'.tr()`, and test files.
 
-Accepted false negatives: `'e.g.'` (a `.` between two letters) and other dotted abbreviations. Accepted false positives: `'OK'`, `'Yes'` and English brand names are reported like any other word.
+No quick fix: it depends on your localization setup.
 
-No quick fix: extracting the string depends on the project's localization setup. Use `context.l10n.key` / `AppLocalizations.of(context).key` with `flutter gen-l10n`, or `'key'.tr()` with easy_localization.
+### 🇫🇷 `french_no_break_space`
 
-### `french_no_break_space`
+A regular space lets the sign wrap alone to the next line.
 
-French typography puts a narrow no-break space (U+202F) before `?` `!` `;`, and a no-break space (U+00A0) before `:` and before `€` after an amount. A regular space lets the sign wrap to the next line alone.
+| Sign | Expected before it | Code point |
+|------|--------------------|------------|
+| `?` `!` `;` | narrow no-break space | U+202F |
+| `:` | no-break space | U+00A0 |
+| `€` after an amount (`5 €`, `$price €`) | no-break space | U+00A0 |
+| apostrophe | straight `'` | U+0027 (not U+2019) |
+| dash | hyphen `-` | U+002D (not U+2014, U+2013) |
 
 ```dart
 // BAD
@@ -283,15 +268,9 @@ French typography puts a narrow no-break space (U+202F) before `?` `!` `;`, and 
 'Prix : 5 €'
 ```
 
-Not reported: a sign followed by a letter, a digit, `/` or `=` (`HH:mm`, `10:30`, `https://…`, `?param=value`, `!=`), a sign at the start of a string (`'?'`, `': '`, separators joined at runtime), a `:` ending a string right before a placeholder (`'$h:$m'`, `'Total :$amount'`), the second sign of `?!` / `!!!`, and `€` not preceded by an amount (`'€'`, `'Prix en €'`, `'5 k€'`). Regional French files (`*_fr_CA.dart`, `super('fr_CA')`) are skipped: their spacing rules differ.
+### 🇫🇷 `french_straight_apostrophe`
 
-Known false positives, accepted: `:)`, HTML entities (`&nbsp;!`), number patterns (`#,##0.00 €`), English brand names (`Yahoo!`).
-
-No quick fix: see [French texts](#french-texts).
-
-### `french_straight_apostrophe`
-
-The typographic apostrophe (U+2019) and the straight one (U+0027) look alike and get mixed in the same app: this rule standardizes on the straight apostrophe.
+One apostrophe for the whole app: the straight one.
 
 ```dart
 // BAD
@@ -301,11 +280,9 @@ The typographic apostrophe (U+2019) and the straight one (U+0027) look alike and
 "l'été"
 ```
 
-No quick fix: see [French texts](#french-texts).
+### 🇫🇷 `french_hyphen_only`
 
-### `french_hyphen_only`
-
-Em dashes (U+2014) and en dashes (U+2013) get mixed with hyphens in the same app: this rule standardizes on the hyphen.
+One dash for the whole app: the hyphen.
 
 ```dart
 // BAD
@@ -315,13 +292,9 @@ Em dashes (U+2014) and en dashes (U+2013) get mixed with hyphens in the same app
 'Lun-Ven'
 ```
 
-Not reported: the non-breaking hyphen (U+2011) and the minus sign (U+2212). A lone `'—'` placeholder is an accepted false positive.
-
-No quick fix: see [French texts](#french-texts).
-
 ## Configuration
 
-Every rule is enabled by default and reported as a `warning`. Rules are tuned in the `diagnostics` map of the plugin's section. `true` / `false` is the form documented on dart.dev; `info` / `warning` / `error` are supported by the analyzer today (not yet documented on dart.dev; tested with Dart 3.13):
+Every rule is a `warning`, tuned in `diagnostics` (`false`, `info`, `warning`, `error`):
 
 ```yaml
 plugins:
@@ -332,86 +305,3 @@ plugins:
       avoid_hardcoded_strings: info
       french_no_break_space: error
 ```
-
-A diagnostic can be ignored in place, with the plugin name as prefix:
-
-```dart
-// ignore: daad_lints/avoid_hardcoded_strings
-Text('Hello')
-```
-
-Or for a whole file: `// ignore_for_file: daad_lints/avoid_hardcoded_strings`.
-
-`prefer_int_literals` must stay disabled when `prefer_double_literals` is on: the two contradict each other.
-
-### Adopting on an existing app
-
-`flutter analyze` treats warnings as fatal, and a large app gets one `avoid_hardcoded_strings` warning per hardcoded string. To adopt gradually:
-
-- start with `avoid_hardcoded_strings: info` (or `false`), and promote it to `warning` once the screens are migrated;
-- exclude the widgetbook, stories and debug screens with `analyzer: exclude:` (`lib/widgetbook/**`);
-- put `// ignore_for_file: daad_lints/avoid_hardcoded_strings` at the top of a screen under migration;
-- a design-system package with English defaults disables the rule in its own `plugins` section.
-
-Per-rule path exclusions are not supported.
-
-## French texts
-
-The three `french_*` rules check the French typography of the **generated per-locale localization files**: any `*_fr.dart` or `*_fr_<REGION>.dart` file, with a two-letter or three-digit region (`app_localizations_fr.dart` from `flutter gen-l10n`, `messages_fr.dart` / `messages_fr_FR.dart` from `intl_utils` / `intl_translation`, hand-written ones included).
-The `.arb` files are the source of truth, but an analyzer plugin only sees Dart files: fix the string in the `.arb` file, then regenerate (`flutter gen-l10n`). There is no quick fix, the generated file would be overwritten.
-Not supported: slang's `*.g.dart` output and runtime JSON loaders (the strings never reach a Dart file).
-
-Prerequisites:
-
-- The generated files must live under `lib/` (gen-l10n `synthetic-package: false`, the current default): a `.dart_tool/` output is never analyzed.
-- When the generated files are gitignored, generate them before `dart analyze` in CI.
-- Do not exclude them: `analyzer: exclude: [lib/l10n/**]` or `lib/generated/**` silences the rules without any error.
-- A `plugins:` section is not inherited through `include:`: each package owning `.arb` files needs its own.
-
-| Sign | Expected before it | Code point |
-|------|--------------------|------------|
-| `?` `!` `;` | narrow no-break space | U+202F |
-| `:` | no-break space | U+00A0 |
-| `€` after an amount (`5 €`, `$price €`) | no-break space | U+00A0 |
-| apostrophe | straight `'` | U+0027 (not U+2019) |
-| dash | hyphen `-` | U+002D (not U+2014, U+2013) |
-
-Regional French (`fr_CA`, `fr_CH`…) has its own spacing rules: `french_no_break_space` skips the `*_fr_CA.dart` files and the gen-l10n regional classes (`super('fr_CA')`) of a `_fr.dart` file. `fr` and `fr_FR` are checked. The apostrophe and hyphen rules apply everywhere.
-
-In the `.arb` file, type the characters as JSON escapes: `"hello": "Bonjour {name} !"`, `"price": "Prix : {amount} €"` (the generator decodes them).
-With gen-l10n's `use-escaping: true`, a straight `'` must be doubled in the `.arb` (`"l''été"`).
-In VS Code, `editor.unicodeHighlight.invisibleCharacters` shows the no-break spaces; the diagnostic message names the found character anyway, as U+00A0 and U+202F look identical.
-
-Adoption: the rules are enabled by default, and can turn CI red on a large `_fr.dart` file. Lower a severity or disable a rule in the `plugins` section:
-
-```yaml
-plugins:
-  daad_lints:
-    version: ^1.0.0
-    diagnostics:
-      french_no_break_space: info
-      french_hyphen_only: false
-```
-
-Or ignore a rule in the generated files through gen-l10n's `header` option in `l10n.yaml`: `header: "// ignore_for_file: daad_lints/french_no_break_space"`.
-
-## Troubleshooting
-
-- **The quick fixes do not run with `dart fix`**: `dart fix` does not run plugin fixes. Apply them from the IDE, as a quick fix or "fix all in file".
-- **A change has no effect**: the analysis server caches the built plugin. Restart it after any change to the `plugins` section and after upgrading the package.
-- **No diagnostic at all**: the plugin did not load. Check the Dart SDK (`^3.13.2`), restart the analysis server, then open the analyzer diagnostics page (VS Code: "Dart: Open Analyzer Diagnostics") for the plugin's error.
-- **`avoid_hardcoded_strings` misses a string**: it only looks at literals written directly in a constructor call. Variables, constants, concatenations, method results and default values are never followed.
-
-## Development
-
-```bash
-dart test                      # the rule tests (analyzer_testing)
-dart analyze lib test          # static analysis of the plugin
-cd example && dart analyze     # the plugin diagnostics on the sample app
-dart pub publish --dry-run     # the pub.dev checks
-```
-
-- The plugin entry point is `lib/main.dart` (the top-level `plugin` variable). Rules live in `lib/src/rules`, quick fixes in `lib/src/fixes`.
-- The `example` app enables the plugin from the local path: run `dart analyze` inside it to see every rule reported at least once. It is a Flutter app, and `dart pub get` at the root resolves it too: the Flutter SDK is needed to work on the repository, even though the plugin itself only depends on `analyzer`.
-- `print` does not work inside a plugin: write to a log file, or check the analyzer diagnostics page when the plugin crashes.
-- Coding agents and contributors adding a rule: see `AGENTS.md`.
