@@ -3,6 +3,7 @@
 const Map<String, String> flutterStubFiles = <String, String>{
   'lib/painting.dart': r'''
 export 'src/painting/alignment.dart';
+export 'src/painting/basic_types.dart';
 export 'src/painting/edge_insets.dart';
 export 'src/painting/inline_span.dart';
 export 'src/painting/text_span.dart';
@@ -28,6 +29,7 @@ export 'src/material/theme.dart';
 export 'src/material/tooltip.dart';
 ''',
   'lib/src/painting/alignment.dart': _alignment,
+  'lib/src/painting/basic_types.dart': _basicTypes,
   'lib/src/painting/edge_insets.dart': _edgeInsets,
   'lib/src/painting/inline_span.dart': _inlineSpan,
   'lib/src/painting/text_span.dart': _textSpan,
@@ -263,19 +265,72 @@ abstract class State<T extends StatefulWidget> {
 }
 ''';
 
+const String _basicTypes = r'''
+class Size {
+  const Size(this.width, this.height);
+
+  final double width;
+  final double height;
+
+  double get shortestSide => width;
+}
+''';
+
 const String _mediaQuery = r'''
+import '../painting/basic_types.dart';
+import '../painting/edge_insets.dart';
 import 'framework.dart';
 
 class MediaQueryData {
-  const MediaQueryData({this.devicePixelRatio = 1.0});
+  const MediaQueryData({
+    this.size = const Size(0.0, 0.0),
+    this.devicePixelRatio = 1.0,
+    this.padding = const EdgeInsets.all(0.0),
+    this.letterSpacingOverride,
+    this.supportsShowingSystemContextMenu = false,
+  });
 
+  final Size size;
   final double devicePixelRatio;
+  final EdgeInsets padding;
+  final double? letterSpacingOverride;
+  final bool supportsShowingSystemContextMenu;
+
+  @Deprecated('Use textScaler instead.')
+  double get textScaleFactor => 1.0;
+
+  MediaQueryData copyWith({Size? size}) => this;
+
+  MediaQueryData removePadding({bool removeTop = false}) => this;
 }
 
 abstract final class MediaQuery {
   static MediaQueryData of(BuildContext context) => const MediaQueryData();
 
   static MediaQueryData? maybeOf(BuildContext context) => null;
+
+  static Size sizeOf(BuildContext context) => of(context).size;
+
+  static Size? maybeSizeOf(BuildContext context) => maybeOf(context)?.size;
+
+  static double widthOf(BuildContext context) => of(context).size.width;
+
+  static double? maybeWidthOf(BuildContext context) =>
+      maybeOf(context)?.size.width;
+
+  static EdgeInsets paddingOf(BuildContext context) => of(context).padding;
+
+  static EdgeInsets? maybePaddingOf(BuildContext context) =>
+      maybeOf(context)?.padding;
+
+  @Deprecated('Use textScalerOf instead.')
+  static double textScaleFactorOf(BuildContext context) => 1.0;
+
+  static double? maybeLetterSpacingOverrideOf(BuildContext context) =>
+      maybeOf(context)?.letterSpacingOverride;
+
+  static bool supportsShowingSystemContextMenu(BuildContext context) =>
+      of(context).supportsShowingSystemContextMenu;
 }
 ''';
 
@@ -283,6 +338,8 @@ const String _navigator = r'''
 import 'framework.dart';
 
 class NavigatorState {
+  bool canPop() => false;
+
   void pop() {}
 }
 

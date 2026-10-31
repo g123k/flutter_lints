@@ -1,3 +1,13 @@
+## 1.1.0 (31/10/2026)
+
+### Added
+
+- `avoid_media_query_of`: `MediaQuery.of(context)` / `MediaQuery.maybeOf(context)` rebuild the widget when any `MediaQueryData` property changes; use the dedicated accessor (`MediaQuery.sizeOf`, `MediaQuery.maybePaddingOf`...) (quick fix). Enabled by default: upgrading reports new warnings, which fail CI runs using `--fatal-warnings` until fixed, ignored or disabled (`diagnostics: avoid_media_query_of: false`).
+
+### Changed
+
+- `avoid_repeated_of_context` no longer reports `MediaQuery.of` / `maybeOf`, left to `avoid_media_query_of`: the `// ignore: daad_lints/avoid_repeated_of_context` comments on them become unnecessary. With `avoid_media_query_of` disabled, repeated `MediaQuery.of` calls are reported by neither rule.
+
 ## 1.0.0 (30/10/2026)
 
 Initial release: an analyzer plugin for Dart `^3.13.2`, enabled with `plugins: daad_lints: ^1.0.0` in `analysis_options.yaml`.

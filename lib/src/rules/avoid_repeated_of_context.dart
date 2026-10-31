@@ -7,6 +7,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/diagnostic/diagnostic.dart';
 import 'package:analyzer/error/error.dart';
+import 'package:daad_lints/src/utils/flutter_elements.dart';
 import 'package:daad_lints/src/utils/generated_files.dart';
 
 /// Forbids calling the same static `of` / `maybeOf` method several times with
@@ -14,7 +15,7 @@ import 'package:daad_lints/src/utils/generated_files.dart';
 /// call walks the widget tree again.
 ///
 /// Calls inside closures and `assert`s are not counted: they do not run on
-/// each build.
+/// each build. `MediaQuery.of` / `maybeOf` are left to `avoid_media_query_of`.
 class AvoidRepeatedOfContext extends AnalysisRule {
   AvoidRepeatedOfContext()
     : super(
@@ -149,7 +150,8 @@ class _CallCollector extends RecursiveAstVisitor<void> {
     String name = node.methodName.name;
     if ((name == 'of' || name == 'maybeOf') &&
         method is MethodElement &&
-        method.isStatic) {
+        method.isStatic &&
+        !isMediaQueryCall(node)) {
       List<Argument> arguments = node.argumentList.arguments;
       Argument? contextArgument = arguments
           .where(

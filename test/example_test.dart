@@ -10,6 +10,7 @@ const List<String> _rules = <String>[
   'avoid_alignment',
   'avoid_edge_insets_only',
   'avoid_hardcoded_strings',
+  'avoid_media_query_of',
   'avoid_positioned',
   'avoid_repeated_of_context',
   'dispose_after_build',

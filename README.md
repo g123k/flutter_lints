@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/daad_lints.svg)](https://pub.dev/packages/daad_lints)
 
-An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) with twelve lint rules for Flutter apps and packages: directional widgets for right-to-left layouts, member ordering, repeated `of(context)` calls, French typography in the generated localization files, and hardcoded user-facing strings. Eight rules come with a quick fix, also available as "fix all in file". Every rule is reported as a `warning` and can be tuned or disabled per project.
+An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) with thirteen lint rules for Flutter apps and packages: directional widgets for right-to-left layouts, member ordering, repeated `of(context)` calls, `MediaQuery.of(context)` rebuilds, French typography in the generated localization files, and hardcoded user-facing strings. Nine rules come with a quick fix, also available as "fix all in file". Every rule is reported as a `warning` and can be tuned or disabled per project.
 
 | Rule | Checks | Quick fix |
 |------|--------|-----------|
@@ -14,6 +14,7 @@ An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) with twelve lint r
 | `dispose_after_build` | `dispose()` declared before `build()` in a `State` | moves `dispose()` to the end of the class |
 | `field_ordering` | fields out of order | sorts them: `static const` / `static final`, other `static`, `final` instance, other instance fields |
 | `avoid_repeated_of_context` | `Theme.of(context)` called twice in `build` | `final ThemeData theme = Theme.of(context);`, then `theme` |
+| `avoid_media_query_of` | `MediaQuery.of(context).size`, `MediaQuery.maybeOf(context)?.padding` | `MediaQuery.sizeOf(context)`, `MediaQuery.maybePaddingOf(context)` |
 | `avoid_hardcoded_strings` | `Text('Hello')`, `Tooltip(message: 'Save')` | none |
 | `french_no_break_space` | `'Bonjour !'`, `'Prix : 5 €'` (regular or no space before `?` `!` `;` `:` `€`) | none |
 | `french_straight_apostrophe` | `'l’été'` (typographic apostrophe U+2019) | none |
@@ -205,9 +206,29 @@ Widget build(BuildContext context) {
 }
 ```
 
-Not reported: accessors other than `of` / `maybeOf` (`MediaQuery.sizeOf`), calls using another context (a nested `Builder`'s), calls inside closures or `assert`s (they do not run on each build), and generated files. Each repeated call is reported, with the others as context messages.
+Not reported: accessors other than `of` / `maybeOf` (`MediaQuery.sizeOf`), `MediaQuery.of` / `maybeOf` (left to [`avoid_media_query_of`](#avoid_media_query_of)), calls using another context (a nested `Builder`'s), calls inside closures or `assert`s (they do not run on each build), and generated files. Each repeated call is reported, with the others as context messages.
 
 Quick fix: extracts the call into a local variable at the top of `build`. Not offered for an expression-bodied `build` (`=> ...`), or when the variable name is already used in `build`.
+
+### `avoid_media_query_of`
+
+`MediaQuery.of(context)` makes the widget depend on the whole `MediaQueryData`: it rebuilds when any property changes, eg: on each frame of the keyboard animation (`viewInsets`), even if it only reads the screen size. The dedicated accessors (`MediaQuery.sizeOf`, `MediaQuery.paddingOf`...) only depend on the property they read.
+
+```dart
+// BAD
+final double width = MediaQuery.of(context).size.width;
+final EdgeInsets? padding = MediaQuery.maybeOf(context)?.padding;
+
+// GOOD
+final double width = MediaQuery.widthOf(context);
+final EdgeInsets? padding = MediaQuery.maybePaddingOf(context);
+```
+
+Every `MediaQuery.of` / `maybeOf` call is reported, also outside `build` and in test code, including the ones using the whole object (`final MediaQueryData data = MediaQuery.of(context);`): read each property with its accessor instead.
+
+Not reported: the `MediaQueryData` methods with no accessor, called or torn off on the result (`copyWith`, `removePadding`, `removeViewInsets`, `removeViewPadding`, `removeDisplayFeatures`). The `MediaQuery.removePadding(context: context, ...)` / `MediaQuery.removeViewInsets(...)` widgets are the usual alternative to them and to `MediaQuery(data: MediaQuery.of(context)...)`. Also not reported: the dedicated accessors, a `MediaQuery.of` tear-off, a `MediaQuery` class outside Flutter, and generated files.
+
+Quick fix: replaces the call and the property read with the accessor of the installed Flutter version: `MediaQuery.of(context).size` -> `MediaQuery.sizeOf(context)`, `.size.width` -> `MediaQuery.widthOf(context)` (`MediaQuery.sizeOf(context).width` without it), `MediaQuery.maybeOf(context)?.padding.top` -> `MediaQuery.maybePaddingOf(context)?.top`. A few accessors (`highContrastOf`, `boldTextOf`, `supportsAnnounceOf`) return `false` without a `MediaQuery` ancestor, where `MediaQuery.of` throws. Not offered for the whole object, a deprecated accessor (`textScaleFactor`), a property with only a `maybe` accessor (`letterSpacingOverride`) used with `of`, an extension getter, `MediaQuery.maybeOf(context)!.size`, a parenthesized call, a cascade on the call, or an index, a cascade or a `!` after a `MediaQuery.maybeOf(context)?.<property>` read.
 
 ### `avoid_hardcoded_strings`
 

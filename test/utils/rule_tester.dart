@@ -23,10 +23,14 @@ abstract class RuleTest extends AnalysisRuleTest {
   })
   createFix;
 
+  /// The files of the `flutter` package, keyed by their path in the package.
+  /// Override to test against another Flutter version.
+  Map<String, String> get flutterFiles => flutterStubFiles;
+
   @override
   void setUp() {
     PackageBuilder flutter = newPackage('flutter');
-    flutterStubFiles.forEach(flutter.addFile);
+    flutterFiles.forEach(flutter.addFile);
     super.setUp();
   }
 
@@ -41,8 +45,13 @@ abstract class RuleTest extends AnalysisRuleTest {
   }
 
   /// Asserts that [code] reports a diagnostic, and that the fix of each of
-  /// its diagnostics transforms [code] into [expected].
-  Future<void> assertFix(String code, String expected) async {
+  /// its diagnostics transforms [code] into [expected], with [fixArguments]
+  /// (the arguments of the fix label) when given.
+  Future<void> assertFix(
+    String code,
+    String expected, {
+    List<String>? fixArguments,
+  }) async {
     _Resolved resolved = await _resolve(code);
     expect(resolved.diagnostics, isNotEmpty);
 
@@ -55,6 +64,9 @@ abstract class RuleTest extends AnalysisRuleTest {
       await producer.compute(builder);
 
       expect(_apply(code, builder), expected);
+      if (fixArguments != null) {
+        expect(producer.fixArguments, fixArguments);
+      }
     }
   }
 

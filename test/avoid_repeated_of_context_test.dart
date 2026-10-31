@@ -95,14 +95,14 @@ class W extends StatefulWidget {
 class _WState extends State<W> {
   @override
   Widget build(BuildContext context) {
-    double a = MediaQuery.of(context).devicePixelRatio;
-    double b = MediaQuery.of(context).devicePixelRatio;
-    double c = MediaQuery.of(context).devicePixelRatio;
+    bool a = Theme.of(context).useMaterial3;
+    bool b = Theme.of(context).useMaterial3;
+    bool c = Theme.of(context).useMaterial3;
     return const Widget();
   }
 }
 ''';
-    const String call = 'MediaQuery.of(context)';
+    const String call = 'Theme.of(context)';
     await assertDiagnostics(code, _group(code, call, [0, 1, 2]));
   }
 
@@ -137,7 +137,6 @@ class A extends StatelessWidget {
   Widget build(BuildContext context) {
     ThemeData a = Theme.of(context);
     ThemeData? b = Theme.maybeOf(context);
-    MediaQueryData c = MediaQuery.of(context);
     NavigatorState d = Navigator.of(context);
     NavigatorState e = Navigator.of(context, rootNavigator: true);
     NavigatorState f = Navigator.of(context, rootNavigator: true);
@@ -287,8 +286,8 @@ import 'package:flutter/material.dart';
 class A extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    double? a = MediaQuery.maybeOf(context)?.devicePixelRatio;
-    double? b = MediaQuery.maybeOf(context)?.devicePixelRatio;
+    bool? a = Theme.maybeOf(context)?.useMaterial3;
+    bool? b = Theme.maybeOf(context)?.useMaterial3;
     return Widget(key: Key('$a$b'));
   }
 }
@@ -299,9 +298,9 @@ import 'package:flutter/material.dart';
 class A extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final MediaQueryData? mediaQuery = MediaQuery.maybeOf(context);
-    double? a = mediaQuery?.devicePixelRatio;
-    double? b = mediaQuery?.devicePixelRatio;
+    final ThemeData? theme = Theme.maybeOf(context);
+    bool? a = theme?.useMaterial3;
+    bool? b = theme?.useMaterial3;
     return Widget(key: Key('$a$b'));
   }
 }
@@ -671,8 +670,8 @@ import 'package:flutter/material.dart';
 class A extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    String a = '${Theme.of(context).useMaterial3}${MediaQuery.of(context).devicePixelRatio}';
-    String b = '${Theme.of(context).useMaterial3}${MediaQuery.of(context).devicePixelRatio}';
+    String a = '${Theme.of(context).useMaterial3}${Navigator.of(context).canPop()}';
+    String b = '${Theme.of(context).useMaterial3}${Navigator.of(context).canPop()}';
     return Widget(key: Key(a + b));
   }
 }
@@ -684,9 +683,9 @@ class A extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final MediaQueryData mediaQuery = MediaQuery.of(context);
-    String a = '${theme.useMaterial3}${mediaQuery.devicePixelRatio}';
-    String b = '${theme.useMaterial3}${mediaQuery.devicePixelRatio}';
+    final NavigatorState navigator = Navigator.of(context);
+    String a = '${theme.useMaterial3}${navigator.canPop()}';
+    String b = '${theme.useMaterial3}${navigator.canPop()}';
     return Widget(key: Key(a + b));
   }
 }
@@ -726,6 +725,22 @@ class A extends StatelessWidget {
 }
 ''',
     );
+  }
+
+  Future<void> test_mediaQuery_notReported() async {
+    await assertNoDiagnostics(r'''
+import 'package:flutter/material.dart';
+
+class A extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    double a = MediaQuery.of(context).size.width;
+    double? b = MediaQuery.maybeOf(context)?.size.height;
+    double c = MediaQuery.of(context).size.width;
+    return Widget(key: Key('$a$b$c'));
+  }
+}
+''');
   }
 
   Future<void> test_generatedFile_part() async {

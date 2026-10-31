@@ -101,3 +101,12 @@ class HardcodedStrings extends StatelessWidget {
     );
   }
 }
+
+class ScreenWidth extends StatelessWidget {
+  const ScreenWidth({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(width: MediaQuery.of(context).size.width / 2.0);
+  }
+}

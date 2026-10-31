@@ -118,7 +118,7 @@ class ExtractOfContext extends ResolvedCorrectionProducer {
 
   /// The variable name for [call]: from its type argument if any, inferred
   /// or not (`Provider.of<CartModel>` -> `cartModel`), else from its class
-  /// (`MediaQuery.of` -> `mediaQuery`).
+  /// (`Navigator.of` -> `navigator`).
   static String _variableName(MethodInvocation call) {
     DartType? typeArgument = call.typeArgumentTypes?.firstOrNull;
     Expression? target = call.target;
