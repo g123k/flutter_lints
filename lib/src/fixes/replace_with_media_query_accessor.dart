@@ -19,6 +19,10 @@ import 'package:daad_lints/src/utils/flutter_elements.dart';
 /// The accessor is looked up on `MediaQuery` (`<property>Of`, then
 /// `<property>`; `maybe<Property>Of`, then `maybe<Property>`), so the fix
 /// follows the installed Flutter version. No fix when there is none.
+///
+/// Without a `MediaQuery` ancestor, `MediaQuery.of` throws but a few
+/// accessors return a default value instead (eg: `textScalerOf`,
+/// `platformBrightnessOf`, `boldTextOf`): see the README.
 class ReplaceWithMediaQueryAccessor extends ResolvedCorrectionProducer {
   ReplaceWithMediaQueryAccessor({required super.context});
 
@@ -121,15 +125,12 @@ class ReplaceWithMediaQueryAccessor extends ResolvedCorrectionProducer {
       }
     }
 
-    String arguments = unitResult.content.substring(
-      call.argumentList.offset,
-      call.argumentList.end,
-    );
-    _accessor = accessor;
+    String name = accessor;
+    _accessor = name;
     await builder.addDartFileEdit(file, (DartFileEditBuilder builder) {
-      builder.addSimpleReplacement(
-        range.startEnd(call.methodName, replaced),
-        '$accessor$arguments',
+      builder.addSimpleReplacement(range.node(call.methodName), name);
+      builder.addDeletion(
+        range.startOffsetEndOffset(call.argumentList.end, replaced.end),
       );
       if (continuation != null) {
         builder.addSimpleReplacement(range.token(continuation), '?.');

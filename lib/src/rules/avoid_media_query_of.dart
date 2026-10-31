@@ -40,6 +40,7 @@ class AvoidMediaQueryOf extends AnalysisRule {
     'removeViewInsets',
     'removeViewPadding',
     'removeDisplayFeatures',
+    'applyDisplayCornerRadii',
   };
 
   @override

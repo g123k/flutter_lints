@@ -145,6 +145,7 @@ Size size(BuildContext context) => MQ.of(context).size;
     MediaQueryData f = MediaQuery.of(context).removeViewInsets(removeTop: true);
     MediaQueryData g = MediaQuery.of(context).removeViewPadding();
     MediaQueryData? h = MediaQuery.maybeOf(context)?.removeDisplayFeatures(Object());
+    MediaQueryData i = MediaQuery.of(context).applyDisplayCornerRadii(null);
 '''),
     );
   }

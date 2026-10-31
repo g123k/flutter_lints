@@ -310,6 +310,8 @@ class MediaQueryData {
   MediaQueryData removeViewPadding({bool removeTop = false}) => this;
 
   MediaQueryData removeDisplayFeatures(Object subScreen) => this;
+
+  MediaQueryData applyDisplayCornerRadii(Object? displayCornerRadii) => this;
 }
 
 abstract final class MediaQuery {
