@@ -60,8 +60,10 @@ class ReplaceWithMediaQueryAccessor extends ResolvedCorrectionProducer {
       return;
     }
 
+    Element? mediaQuery = call.methodName.element?.enclosingElement;
     AstNode? read = call.parent;
-    if (read is! PropertyAccess ||
+    if (mediaQuery is! InterfaceElement ||
+        read is! PropertyAccess ||
         read.target != call ||
         !isFlutterClass(
           read.propertyName.element?.enclosingElement,
@@ -70,8 +72,6 @@ class ReplaceWithMediaQueryAccessor extends ResolvedCorrectionProducer {
       return;
     }
 
-    InterfaceElement mediaQuery =
-        call.methodName.element!.enclosingElement! as InterfaceElement;
     bool isMaybe = call.methodName.name == 'maybeOf';
 
     // `.size.width` has its own accessor, which only depends on the width.
@@ -117,9 +117,6 @@ class ReplaceWithMediaQueryAccessor extends ResolvedCorrectionProducer {
         case CascadeExpression(:Expression target) when target == replaced:
           return;
         case PostfixExpression(:Expression operand) when operand == replaced:
-          return;
-        case FunctionExpressionInvocation(:Expression function)
-            when function == replaced:
           return;
       }
     }

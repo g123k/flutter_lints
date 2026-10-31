@@ -737,10 +737,32 @@ class A extends StatelessWidget {
     double a = MediaQuery.of(context).size.width;
     double? b = MediaQuery.maybeOf(context)?.size.height;
     double c = MediaQuery.of(context).size.width;
-    return Widget(key: Key('$a$b$c'));
+    double? d = MediaQuery.maybeOf(context)?.size.height;
+    return Widget(key: Key('$a$b$c$d'));
   }
 }
 ''');
+  }
+
+  Future<void> test_nonFlutterMediaQuery_reported() async {
+    const String code = r'''
+import 'package:flutter/widgets.dart' hide MediaQuery;
+
+abstract final class MediaQuery {
+  static MediaQueryData of(BuildContext context) => const MediaQueryData();
+}
+
+class A extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Size a = MediaQuery.of(context).size;
+    Size b = MediaQuery.of(context).size;
+    return Widget(key: Key('$a$b'));
+  }
+}
+''';
+    const String call = 'MediaQuery.of(context)';
+    await assertDiagnostics(code, _group(code, call, [0, 1]));
   }
 
   Future<void> test_generatedFile_part() async {

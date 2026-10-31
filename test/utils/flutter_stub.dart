@@ -288,6 +288,7 @@ class MediaQueryData {
     this.padding = const EdgeInsets.all(0.0),
     this.letterSpacingOverride,
     this.supportsShowingSystemContextMenu = false,
+    this.displayFeatures = const <Object>[],
   });
 
   final Size size;
@@ -295,6 +296,7 @@ class MediaQueryData {
   final EdgeInsets padding;
   final double? letterSpacingOverride;
   final bool supportsShowingSystemContextMenu;
+  final List<Object> displayFeatures;
 
   @Deprecated('Use textScaler instead.')
   double get textScaleFactor => 1.0;
@@ -302,6 +304,12 @@ class MediaQueryData {
   MediaQueryData copyWith({Size? size}) => this;
 
   MediaQueryData removePadding({bool removeTop = false}) => this;
+
+  MediaQueryData removeViewInsets({bool removeTop = false}) => this;
+
+  MediaQueryData removeViewPadding({bool removeTop = false}) => this;
+
+  MediaQueryData removeDisplayFeatures(Object subScreen) => this;
 }
 
 abstract final class MediaQuery {
@@ -318,6 +326,11 @@ abstract final class MediaQuery {
   static double? maybeWidthOf(BuildContext context) =>
       maybeOf(context)?.size.width;
 
+  static double heightOf(BuildContext context) => of(context).size.height;
+
+  static double? maybeHeightOf(BuildContext context) =>
+      maybeOf(context)?.size.height;
+
   static EdgeInsets paddingOf(BuildContext context) => of(context).padding;
 
   static EdgeInsets? maybePaddingOf(BuildContext context) =>
@@ -331,6 +344,15 @@ abstract final class MediaQuery {
 
   static bool supportsShowingSystemContextMenu(BuildContext context) =>
       of(context).supportsShowingSystemContextMenu;
+
+  static bool? maybeSupportsShowingSystemContextMenu(BuildContext context) =>
+      maybeOf(context)?.supportsShowingSystemContextMenu;
+
+  static List<Object> displayFeaturesOf(BuildContext context) =>
+      of(context).displayFeatures;
+
+  static List<Object>? maybeDisplayFeaturesOf(BuildContext context) =>
+      maybeOf(context)?.displayFeatures;
 }
 ''';
 

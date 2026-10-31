@@ -46,7 +46,8 @@ abstract class RuleTest extends AnalysisRuleTest {
 
   /// Asserts that [code] reports a diagnostic, and that the fix of each of
   /// its diagnostics transforms [code] into [expected], with [fixArguments]
-  /// (the arguments of the fix label) when given.
+  /// (the arguments of the fix label) when given. [expected] must have no
+  /// compile error.
   Future<void> assertFix(
     String code,
     String expected, {
@@ -68,13 +69,26 @@ abstract class RuleTest extends AnalysisRuleTest {
         expect(producer.fixArguments, fixArguments);
       }
     }
+
+    newFile(testFilePath, expected);
+    ResolvedUnitResult fixed = await resolveFile(testFilePath);
+    expect(
+      fixed.diagnostics.where(
+        (Diagnostic diagnostic) => diagnostic.severity == Severity.error,
+      ),
+      isEmpty,
+      reason: 'The fixed code must compile',
+    );
   }
 
-  /// Asserts that [code] reports a diagnostic, and that the fix of each of
-  /// its diagnostics does not change anything.
-  Future<void> assertNoFix(String code) async {
+  /// Asserts that [code] reports a diagnostic ([count] of them when given),
+  /// and that the fix of each of its diagnostics does not change anything.
+  Future<void> assertNoFix(String code, {int? count}) async {
     _Resolved resolved = await _resolve(code);
     expect(resolved.diagnostics, isNotEmpty);
+    if (count != null) {
+      expect(resolved.diagnostics, hasLength(count));
+    }
 
     for (Diagnostic diagnostic in resolved.diagnostics) {
       ChangeBuilder builder = ChangeBuilder(session: resolved.unit.session);

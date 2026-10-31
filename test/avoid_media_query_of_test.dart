@@ -32,6 +32,11 @@ $statements
 }
 ''';
 
+/// The number of `MediaQuery.of(context)` / `MediaQuery.maybeOf(context)`
+/// calls in [code].
+int _calls(String code) =>
+    RegExp(r'MediaQuery\.(of|maybeOf)\(context\)').allMatches(code).length;
+
 @reflectiveTest
 class AvoidMediaQueryOfTest extends RuleTest {
   @override
@@ -137,8 +142,18 @@ Size size(BuildContext context) => MQ.of(context).size;
     MediaQueryData? c = MediaQuery.maybeOf(context)?.copyWith();
     MediaQueryData? d = MediaQuery.maybeOf(context)?.removePadding();
     MediaQueryData Function({Size? size}) e = MediaQuery.of(context).copyWith;
+    MediaQueryData f = MediaQuery.of(context).removeViewInsets(removeTop: true);
+    MediaQueryData g = MediaQuery.of(context).removeViewPadding();
+    MediaQueryData? h = MediaQuery.maybeOf(context)?.removeDisplayFeatures(Object());
 '''),
     );
+  }
+
+  Future<void> test_parenthesizedExemptedTarget() async {
+    String code = _build('''
+    MediaQueryData a = (MediaQuery.of(context)).copyWith();
+''');
+    await assertDiagnostics(code, [_lint(code, 'MediaQuery.of(context)')]);
   }
 
   Future<void> test_dedicatedAccessor() async {
@@ -206,10 +221,10 @@ Size b(BuildContext context) => MediaQuery.of(context).size;
     );
     await assertFix(
       _build('''
-    Size a = MediaQuery.of(context)?.size;
+    Size? a = MediaQuery.of(context)?.size;
 '''),
       _build('''
-    Size a = MediaQuery.sizeOf(context);
+    Size? a = MediaQuery.sizeOf(context);
 '''),
     );
   }
@@ -235,6 +250,33 @@ Size b(BuildContext context) => MediaQuery.of(context).size;
     double a = MediaQuery.widthOf(context);
 '''),
       fixArguments: ['widthOf'],
+    );
+  }
+
+  Future<void> test_fix_sizeHeight() async {
+    await assertFix(
+      _build('''
+    double a = MediaQuery.of(context).size.height;
+'''),
+      _build('''
+    double a = MediaQuery.heightOf(context);
+'''),
+      fixArguments: ['heightOf'],
+    );
+  }
+
+  Future<void> test_fix_multiLineArguments() async {
+    await assertFix(
+      _build('''
+    Size a = MediaQuery.of(
+      context,
+    ).size;
+'''),
+      _build('''
+    Size a = MediaQuery.sizeOf(
+      context,
+    );
+'''),
     );
   }
 
@@ -273,10 +315,54 @@ Size b(BuildContext context) => MediaQuery.of(context).size;
     );
   }
 
+  Future<void> test_fix_maybeOf_sizeHeight() async {
+    await assertFix(
+      _build('''
+    double? a = MediaQuery.maybeOf(context)?.size.height;
+'''),
+      _build('''
+    double? a = MediaQuery.maybeHeightOf(context);
+'''),
+      fixArguments: ['maybeHeightOf'],
+    );
+  }
+
+  Future<void> test_fix_maybeOf_noOfSuffix() async {
+    await assertFix(
+      _build('''
+    bool? a = MediaQuery.maybeOf(context)?.supportsShowingSystemContextMenu;
+'''),
+      _build('''
+    bool? a = MediaQuery.maybeSupportsShowingSystemContextMenu(context);
+'''),
+      fixArguments: ['maybeSupportsShowingSystemContextMenu'],
+    );
+  }
+
+  Future<void> test_fix_maybeOf_onlyMaybeAccessor() async {
+    await assertFix(
+      _build('''
+    double? a = MediaQuery.maybeOf(context)?.letterSpacingOverride;
+'''),
+      _build('''
+    double? a = MediaQuery.maybeLetterSpacingOverrideOf(context);
+'''),
+      fixArguments: ['maybeLetterSpacingOverrideOf'],
+    );
+  }
+
   Future<void> test_fix_maybeOf_continuation() async {
     await assertFix(
       _build('''
     double? a = MediaQuery.maybeOf(context)?.padding.top;
+'''),
+      _build('''
+    double? a = MediaQuery.maybePaddingOf(context)?.top;
+'''),
+    );
+    await assertFix(
+      _build('''
+    double? a = MediaQuery.maybeOf(context)?.padding?.top;
 '''),
       _build('''
     double? a = MediaQuery.maybePaddingOf(context)?.top;
@@ -358,7 +444,7 @@ Size size(BuildContext context) => MQ.sizeOf(context);
   }
 
   Future<void> test_noFix_wholeObject() async {
-    await assertNoFix(r'''
+    const String code = r'''
 import 'package:flutter/widgets.dart';
 
 Object use(MediaQueryData data) => data;
@@ -371,11 +457,12 @@ class A extends StatelessWidget {
     return const Widget();
   }
 }
-''');
+''';
+    await assertNoFix(code, count: _calls(code));
   }
 
   Future<void> test_noFix_noAccessor() async {
-    await assertNoFix(r'''
+    const String code = r'''
 import 'package:flutter/widgets.dart';
 
 extension on MediaQueryData {
@@ -391,20 +478,21 @@ class A extends StatelessWidget {
     return const Widget();
   }
 }
-''');
+''';
+    await assertNoFix(code, count: _calls(code));
   }
 
   Future<void> test_noFix_unsupportedShapes() async {
-    await assertNoFix(
-      _build('''
+    String code = _build('''
     Size a = MediaQuery.maybeOf(context)!.size;
     Size b = (MediaQuery.of(context)).size;
     MediaQueryData c = MediaQuery.of(context)..size;
     String d = MediaQuery.of(context).toString();
     EdgeInsets? e = MediaQuery.maybeOf(context)?.padding!;
     EdgeInsets? f = MediaQuery.maybeOf(context)?.padding?..top;
-'''),
-    );
+    Object? g = MediaQuery.maybeOf(context)?.displayFeatures[0];
+''');
+    await assertNoFix(code, count: _calls(code));
   }
 
   Future<void> test_fixAll() async {
@@ -413,17 +501,23 @@ class A extends StatelessWidget {
     Size a = MediaQuery.of(context).size;
     EdgeInsets b = MediaQuery.of(context).padding;
     MediaQueryData c = MediaQuery.of(context);
+    double? d = MediaQuery.maybeOf(context)?.padding.top;
+    double e = MediaQuery.of(context).size.width + MediaQuery.of(context).size.height;
 '''),
       _build('''
     Size a = MediaQuery.sizeOf(context);
     EdgeInsets b = MediaQuery.paddingOf(context);
     MediaQueryData c = MediaQuery.of(context);
+    double? d = MediaQuery.maybePaddingOf(context)?.top;
+    double e = MediaQuery.widthOf(context) + MediaQuery.heightOf(context);
 '''),
     );
   }
 }
 
-/// Against a Flutter version without `MediaQuery.widthOf` / `maybeWidthOf`.
+/// Against a Flutter version without `MediaQuery.widthOf` / `maybeWidthOf`,
+/// and with `heightOf` / `paddingOf` that are not accessors (an instance
+/// method, a second parameter).
 @reflectiveTest
 class AvoidMediaQueryOfWithoutWidthOfTest extends RuleTest {
   @override
@@ -431,12 +525,17 @@ class AvoidMediaQueryOfWithoutWidthOfTest extends RuleTest {
     ...flutterStubFiles,
     'lib/src/widgets/media_query.dart': r'''
 import '../painting/basic_types.dart';
+import '../painting/edge_insets.dart';
 import 'framework.dart';
 
 class MediaQueryData {
-  const MediaQueryData({this.size = const Size(0.0, 0.0)});
+  const MediaQueryData({
+    this.size = const Size(0.0, 0.0),
+    this.padding = const EdgeInsets.all(0.0),
+  });
 
   final Size size;
+  final EdgeInsets padding;
 }
 
 abstract final class MediaQuery {
@@ -447,6 +546,11 @@ abstract final class MediaQuery {
   static Size sizeOf(BuildContext context) => of(context).size;
 
   static Size? maybeSizeOf(BuildContext context) => maybeOf(context)?.size;
+
+  double heightOf(BuildContext context) => of(context).size.height;
+
+  static EdgeInsets paddingOf(BuildContext context, {bool copy = false}) =>
+      of(context).padding;
 }
 ''',
   };
@@ -467,6 +571,26 @@ abstract final class MediaQuery {
     double a = MediaQuery.sizeOf(context).width;
 '''),
       fixArguments: ['sizeOf'],
+    );
+  }
+
+  Future<void> test_fix_sizeHeight_instanceMethodIgnored() async {
+    await assertFix(
+      _build('''
+    double a = MediaQuery.of(context).size.height;
+'''),
+      _build('''
+    double a = MediaQuery.sizeOf(context).height;
+'''),
+      fixArguments: ['sizeOf'],
+    );
+  }
+
+  Future<void> test_noFix_twoParameterAccessor() async {
+    await assertNoFix(
+      _build('''
+    EdgeInsets a = MediaQuery.of(context).padding;
+'''),
     );
   }
 
