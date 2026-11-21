@@ -114,3 +114,9 @@ class ScreenWidth extends StatelessWidget {
 const String loadingMessage = 'Loading...';
 // Not reported: a RegExp pattern.
 final RegExp threeCharacters = RegExp(r'a...b');
+
+void notifyCount(ValueChanged<int> onChanged, VoidCallback? onDone) {
+  onChanged(0);
+  // Not reported: already explicit.
+  onDone?.call();
+}

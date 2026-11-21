@@ -1,3 +1,9 @@
+## 1.3.0 (21/11/2026)
+
+### Added
+
+- `prefer_explicit_call`: reports a call to a function value (a callback, a function-typed variable, field or getter) written without `.call`: `onChanged(value)` is written `onChanged.call(value)` (quick fix). Enabled by default: upgrading reports new warnings, which fail CI runs using `--fatal-warnings` until fixed, ignored or disabled (`diagnostics: prefer_explicit_call: false`). A Flutter codebase gets one warning per callback call, and `dart fix` does not run plugin fixes: the migration goes through "fix all in file", file by file.
+
 ## 1.2.0 (21/11/2026)
 
 ### Added
