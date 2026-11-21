@@ -86,12 +86,12 @@ void use(W w) {
 }
 """;
     await assertDiagnostics(code, [
-      _callee(code, 'cb', before: '    '),
-      _callee(code, 'lv', before: '    '),
-      _callee(code, 'onTap', before: '    '),
-      _callee(code, 'this.onTap', before: '    '),
-      _callee(code, 'g', before: '    '),
-      _callee(code, 'super.onTap', before: '    '),
+      _callee(code, 'cb', after: '(1)'),
+      _callee(code, 'lv', after: '(2)'),
+      _callee(code, 'onTap', before: ' ', after: '()'),
+      _callee(code, 'this.onTap', after: '()'),
+      _callee(code, 'g', after: '()'),
+      _callee(code, 'super.onTap', after: '()'),
       _callee(code, 'w.onTap'),
       _callee(code, 'w.g'),
       _callee(code, 'W.staticCb'),
@@ -103,6 +103,7 @@ void use(W w) {
     const String code = r"""
 class W {
   void Function()? onTap;
+  void Function() onPress = () {};
 }
 
 void Function() getH() => () {};
@@ -121,6 +122,7 @@ void run(
   (b ?? a)(5);
   n!(6);
   w?.onTap!();
+  w?.onPress();
   r.a();
   r.$1();
   print('${f()}');
@@ -128,10 +130,11 @@ void run(
 """;
     await assertDiagnostics(code, [
       _callee(code, 'hs[0]'),
-      _callee(code, 'getH()', before: '  '),
+      _callee(code, 'getH()', after: '()'),
       _callee(code, '(b ?? a)'),
       _callee(code, 'n!'),
       _callee(code, 'w?.onTap!'),
+      _callee(code, 'w?.onPress'),
       _callee(code, 'r.a'),
       _callee(code, r'r.$1'),
       _callee(code, 'f', before: r'${'),
@@ -174,7 +177,7 @@ void run(T Function<T>(T) gen) {
   gen<int>(1);
 }
 """;
-    await assertDiagnostics(code, [_callee(code, 'gen', before: '  ')]);
+    await assertDiagnostics(code, [_callee(code, 'gen', after: '<int>')]);
   }
 
   Future<void> test_cascade() async {
@@ -196,18 +199,11 @@ void run(W w, W? m) {
   }
 
   Future<void> test_closure() async {
-    const String code = r"""
-int run() {
-  (() {})();
-  return () {
-    return 1;
-  }();
-}
-""";
-    int start = code.indexOf('() {\n    return');
+    const String closure = '() {\n    return 1;\n  }';
+    const String code = 'int run() {\n  (() {})();\n  return $closure();\n}\n';
     await assertDiagnostics(code, [
       _callee(code, '(() {})'),
-      lint(start, code.indexOf('}();') + 1 - start),
+      _callee(code, closure),
     ]);
   }
 
@@ -220,8 +216,8 @@ void run() {
 }
 """;
     await assertDiagnostics(code, [
-      _callee(code, 'h()', before: '  '),
-      _callee(code, 'h()()', before: '  '),
+      _callee(code, 'h()', after: '()()'),
+      _callee(code, 'h()()', after: '()'),
     ]);
   }
 
@@ -234,7 +230,7 @@ void run(void Function(int) cb) {
     await assertDiagnosticsInNewFile(
       '$testPackageRootPath/test/a_test.dart',
       code,
-      [_callee(code, 'cb', before: '  ')],
+      [_callee(code, 'cb', after: '(1)')],
     );
   }
 
@@ -252,19 +248,33 @@ class W {
 
   void m() {}
 
-  void run(void Function(int) cb, void Function(int)? n) {
+  void run(
+    void Function(int) cb,
+    void Function(int)? n,
+    T Function<T>(T) gen,
+    dynamic d,
+  ) {
     cb.call(1);
     n?.call(1);
+    gen.call<int>(1);
     print(1);
     top();
     void local() {}
     local();
     m();
+    this.m();
     W.sm();
     W();
     p.fn();
     int.parse('1');
+    d.foo();
     print('$cb()');
+  }
+}
+
+class S extends W {
+  void sup() {
+    super.m();
   }
 }
 
@@ -276,16 +286,22 @@ void top() {}
     const String code = r"""
 void Function() h() => () {};
 
-void run() {
+void run(void Function()? onDone) {
   String x = 'a';
   x();
   h()()();
+  onDone();
 }
 """;
     await assertDiagnostics(code, [
       error(diag.invocationOfNonFunctionExpression, code.indexOf('x()'), 1),
-      _callee(code, 'h()', before: '  '),
-      error(diag.useOfVoidResult, code.indexOf('h()()()'), 5),
+      _callee(code, 'h()', after: '()()'),
+      error(diag.useOfVoidResult, code.indexOf('h()()()'), 'h()()'.length),
+      error(
+        diag.uncheckedInvocationOfNullableValue,
+        code.indexOf('onDone()'),
+        'onDone'.length,
+      ),
     ]);
   }
 
@@ -307,7 +323,7 @@ void other(void Function(int) cb) {
 }
 """);
     await assertDiagnosticsInUnits([
-      (testFilePath, [_callee(code, 'cb', before: '  ')]),
+      (testFilePath, [_callee(code, 'cb', after: '(1)')]),
       (partPath, []),
     ]);
   }
@@ -375,6 +391,99 @@ void run(void Function(int) cb) {
       r"""
 void run(void Function(int) cb) {
   cb.call /* c */ (1);
+}
+""",
+    );
+  }
+
+  /// The fixed code of each callee shape compiles: `.call` never needs
+  /// parentheses around the callee.
+  Future<void> test_fix_calleeShapes() async {
+    const String declarations = r"""
+class W {
+  void Function(int) onSel = (int x) {};
+}
+
+extension on int {
+  void call(int x) {}
+}
+
+void Function() getH() => () {};
+
+void run(
+  List<void Function(int)> hs,
+  void Function(int) a,
+  void Function(int)? b,
+  void Function(int)? n,
+  W? m,
+  (void Function(),) r,
+  String Function() f,
+  dynamic d,
+) {
+""";
+    const Map<String, String> fixes = <String, String>{
+      'hs[0](4);': 'hs[0].call(4);',
+      'getH()();': 'getH().call();',
+      '(b ?? a)(5);': '(b ?? a).call(5);',
+      'n!(6);': 'n!.call(6);',
+      'm?..onSel(1);': 'm?..onSel.call(1);',
+      r'r.$1();': r'r.$1.call();',
+      r"print('${f()}');": r"print('${f.call()}');",
+      'd();': 'd.call();',
+      '1(2);': '1.call(2);',
+      '(() {})();': '(() {}).call();',
+      'print(() { return 1; }());': 'print(() { return 1; }.call());',
+    };
+    for (MapEntry<String, String> fix in fixes.entries) {
+      await assertFix(
+        '$declarations  ${fix.key}\n}\n',
+        '$declarations  ${fix.value}\n}\n',
+      );
+    }
+  }
+
+  Future<void> test_fix_thisAndSuper() async {
+    await assertFix(
+      r"""
+class V {
+  void call(String s) {}
+
+  void self() {
+    this('y');
+  }
+}
+""",
+      r"""
+class V {
+  void call(String s) {}
+
+  void self() {
+    this.call('y');
+  }
+}
+""",
+    );
+    await assertFix(
+      r"""
+class W {
+  void Function() onTap = () {};
+}
+
+class S extends W {
+  void sup() {
+    super.onTap();
+  }
+}
+""",
+      r"""
+class W {
+  void Function() onTap = () {};
+}
+
+class S extends W {
+  void sup() {
+    super.onTap.call();
+  }
 }
 """,
     );

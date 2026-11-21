@@ -33,9 +33,8 @@ class AddExplicitCall extends ResolvedCorrectionProducer {
 
   @override
   Future<void> compute(ChangeBuilder builder) async {
-    // The diagnostic covers the callee: `.call` goes right after it, before
-    // the type arguments. The callee is already a postfix-level expression,
-    // so no parentheses are needed.
+    // The diagnostic covers exactly the callee, already a postfix-level
+    // expression (`(a ?? b)`, `f()`, `n!`): `.call` needs no parentheses.
     int? offset = diagnosticOffset;
     int? length = diagnosticLength;
     if (offset == null || length == null) {

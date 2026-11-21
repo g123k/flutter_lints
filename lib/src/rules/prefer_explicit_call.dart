@@ -3,6 +3,7 @@ import 'package:analyzer/analysis_rule/rule_context.dart';
 import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:daad_lints/src/utils/generated_files.dart';
@@ -23,8 +24,9 @@ import 'package:daad_lints/src/utils/generated_files.dart';
 /// first line.
 ///
 /// Not reported: `cb.call(x)`, `cb?.call(x)`, calls to declared functions,
-/// methods and constructors, calls on a non-callable or `void` value
-/// (already compile errors) and generated files. Test files are reported.
+/// methods and constructors, calls on a non-callable, `void` or nullable value
+/// (`onDone()` with `VoidCallback? onDone`: already compile errors, which
+/// `.call` alone would not fix) and generated files. Test files are reported.
 class PreferExplicitCall extends AnalysisRule {
   PreferExplicitCall()
     : super(
@@ -60,8 +62,10 @@ class _Visitor extends SimpleAstVisitor<void> {
 
   @override
   void visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    DartType? calleeType = node.function.staticType;
     if (node.staticInvokeType is InvalidType ||
-        node.function.staticType is VoidType ||
+        calleeType is VoidType ||
+        calleeType?.nullabilitySuffix == NullabilitySuffix.question ||
         isGeneratedUnit(context.currentUnit!)) {
       return;
     }
