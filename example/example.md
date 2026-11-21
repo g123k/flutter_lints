@@ -31,14 +31,14 @@ Padding(padding: EdgeInsets.only(top: 18.0, left: 10.0, right: 11.0), child: chi
 warning - lib/main.dart:24:20 - Avoid 'EdgeInsets.only', use 'EdgeInsetsDirectional.only' instead. Try replacing with 'EdgeInsetsDirectional.only' ('left' becomes 'start' and 'right' becomes 'end'). - avoid_edge_insets_only
 ```
 
-A French typography error in a generated localization file (`lib/l10n/app_localizations_fr.dart`):
+A French typography error in a generated localization file (`lib/generated/intl/messages_fr.dart`):
 
 ```dart
-String hello(String name) => 'Bonjour $name !';
+static String m0(user) => "Bienvenue ${user} !";
 ```
 
 ```text
-warning - lib/l10n/app_localizations_fr.dart:13:46 - '!' must be preceded by a narrow no-break space (U+202F), found a regular space (U+0020). Fix the string in the .arb source file and regenerate (a generated file is overwritten), or here when the file is hand-written. - french_no_break_space
+warning - lib/generated/intl/messages_fr.dart:27:47 - '!' must be preceded by a narrow no-break space (U+202F), found a regular space (U+0020). Fix the string in the .arb source file and regenerate (a generated file is overwritten), or here when the file is hand-written. - french_no_break_space
 ```
 
 Every rule, with its BAD / GOOD snippets and what it does not report, is documented in the [README](https://pub.dev/packages/daad_lints#rules).

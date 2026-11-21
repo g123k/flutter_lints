@@ -9,7 +9,7 @@ const List<String> _generatedSuffixes = <String>[
 ];
 
 /// Whether [unit] is a generated file: a known generated suffix, or a
-/// `GENERATED CODE` header comment.
+/// `GENERATED CODE` / `code generated via` (intl) header comment.
 bool isGeneratedUnit(RuleContextUnit unit) {
   String path = unit.file.path;
   if (_generatedSuffixes.any(path.endsWith)) {
@@ -18,7 +18,9 @@ bool isGeneratedUnit(RuleContextUnit unit) {
 
   Token? comment = unit.unit.beginToken.precedingComments;
   while (comment != null) {
-    if (comment.lexeme.toUpperCase().contains('GENERATED CODE')) {
+    String lexeme = comment.lexeme.toUpperCase();
+    if (lexeme.contains('GENERATED CODE') ||
+        lexeme.contains('CODE GENERATED VIA')) {
       return true;
     }
     comment = comment.next;

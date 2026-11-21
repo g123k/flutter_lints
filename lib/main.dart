@@ -6,6 +6,7 @@ import 'package:daad_lints/src/fixes/extract_of_context.dart';
 import 'package:daad_lints/src/fixes/move_dispose_to_end.dart';
 import 'package:daad_lints/src/fixes/move_super_key_last.dart';
 import 'package:daad_lints/src/fixes/replace_with_directional.dart';
+import 'package:daad_lints/src/fixes/replace_with_ellipsis.dart';
 import 'package:daad_lints/src/fixes/replace_with_media_query_accessor.dart';
 import 'package:daad_lints/src/fixes/sort_fields.dart';
 import 'package:daad_lints/src/rules/avoid_alignment.dart';
@@ -21,6 +22,7 @@ import 'package:daad_lints/src/rules/french_hyphen_only.dart';
 import 'package:daad_lints/src/rules/french_no_break_space.dart';
 import 'package:daad_lints/src/rules/french_straight_apostrophe.dart';
 import 'package:daad_lints/src/rules/prefer_double_literals.dart';
+import 'package:daad_lints/src/rules/prefer_ellipsis_character.dart';
 import 'package:daad_lints/src/rules/super_key_last.dart';
 
 /// The entry point the analysis server loads.
@@ -60,6 +62,11 @@ class DaadLintsPlugin extends Plugin {
       ..registerFixForRule(
         AvoidMediaQueryOf.code,
         ReplaceWithMediaQueryAccessor.new,
+      )
+      ..registerWarningRule(PreferEllipsisCharacter())
+      ..registerFixForRule(
+        PreferEllipsisCharacter.code,
+        ReplaceWithEllipsis.new,
       )
       // No fix: extracting the string depends on the project's l10n setup.
       ..registerWarningRule(AvoidHardcodedStrings())

@@ -137,6 +137,14 @@ double a = 1;
 ''');
   }
 
+  Future<void> test_generatedFile_intlHeader() async {
+    await assertNoDiagnostics(r'''
+// DO NOT EDIT. This is code generated via package:intl/generate_localized.dart
+
+double a = 1;
+''');
+  }
+
   Future<void> test_generatedFile_part() async {
     const String code = r'''
 part 'test.g.dart';
