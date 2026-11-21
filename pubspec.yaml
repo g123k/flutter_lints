@@ -1,6 +1,6 @@
 name: daad_lints
 description: Analyzer plugin with Flutter lint rules and quick fixes
-version: 1.2.0
+version: 1.3.0
 homepage: https://www.freelance-flutter.fr/
 repository: https://github.com/g123k/flutter_lints
 issue_tracker: https://github.com/g123k/flutter_lints/issues

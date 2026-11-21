@@ -20,6 +20,7 @@ const List<String> _rules = <String>[
   'french_straight_apostrophe',
   'prefer_double_literals',
   'prefer_ellipsis_character',
+  'prefer_explicit_call',
   'super_key_last',
 ];
 

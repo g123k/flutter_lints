@@ -17,6 +17,7 @@ An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) for Flutter apps.
 | `avoid_media_query_of` | `MediaQuery.of(context).size`, `MediaQuery.maybeOf(context)?.padding` | `MediaQuery.sizeOf(context)`, `MediaQuery.maybePaddingOf(context)` |
 | `avoid_hardcoded_strings` | `Text('Hello')`, `Tooltip(message: 'Save')` | none |
 | `prefer_ellipsis_character` | `'Loading...'` (three dots) | `'Loading…'` |
+| `prefer_explicit_call` | `onChanged(value)`, `widget.onTap()` | `onChanged.call(value)`, `widget.onTap.call()` |
 | `french_no_break_space` 🥖 | `'Bonjour !'`, `'Prix : 5 €'` (regular or no space before `?` `!` `;` `:` `€`) | none |
 | `french_straight_apostrophe` 🥖 | `'l’été'` (typographic apostrophe U+2019) | none |
 | `french_hyphen_only` 🥖 | `'Lun — Ven'` (em dash U+2014, en dash U+2013) | none |
@@ -262,6 +263,22 @@ const String loading = 'Loading…';
 Not reported: `RegExp` patterns, import URIs, generated files (gen-l10n and intl output included).
 
 Quick fix: replaces the three dots with `…`.
+
+### `prefer_explicit_call`
+
+`.call` shows that the callee is a value (a callback), not a method of the class.
+
+```dart
+// BAD
+widget.onChanged(value);
+
+// GOOD
+widget.onChanged.call(value);
+```
+
+Not reported: calls to declared functions (local ones included) and methods, generated files.
+
+Quick fix: adds `.call` after the callee.
 
 ### 🇫🇷 `french_no_break_space`
 

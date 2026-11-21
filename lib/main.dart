@@ -2,6 +2,7 @@ import 'package:analysis_server_plugin/edit/dart/correction_producer.dart';
 import 'package:analysis_server_plugin/plugin.dart';
 import 'package:analysis_server_plugin/registry.dart';
 import 'package:daad_lints/src/fixes/add_decimal_part.dart';
+import 'package:daad_lints/src/fixes/add_explicit_call.dart';
 import 'package:daad_lints/src/fixes/extract_of_context.dart';
 import 'package:daad_lints/src/fixes/move_dispose_to_end.dart';
 import 'package:daad_lints/src/fixes/move_super_key_last.dart';
@@ -23,6 +24,7 @@ import 'package:daad_lints/src/rules/french_no_break_space.dart';
 import 'package:daad_lints/src/rules/french_straight_apostrophe.dart';
 import 'package:daad_lints/src/rules/prefer_double_literals.dart';
 import 'package:daad_lints/src/rules/prefer_ellipsis_character.dart';
+import 'package:daad_lints/src/rules/prefer_explicit_call.dart';
 import 'package:daad_lints/src/rules/super_key_last.dart';
 
 /// The entry point the analysis server loads.
@@ -68,6 +70,8 @@ class DaadLintsPlugin extends Plugin {
         PreferEllipsisCharacter.code,
         ReplaceWithEllipsis.new,
       )
+      ..registerWarningRule(PreferExplicitCall())
+      ..registerFixForRule(PreferExplicitCall.code, AddExplicitCall.new)
       // No fix: extracting the string depends on the project's l10n setup.
       ..registerWarningRule(AvoidHardcodedStrings())
       // The French typography rules have no fix: the .arb source is the place
