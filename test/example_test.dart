@@ -19,6 +19,7 @@ const List<String> _rules = <String>[
   'french_no_break_space',
   'french_straight_apostrophe',
   'prefer_double_literals',
+  'prefer_ellipsis_character',
   'super_key_last',
 ];
 

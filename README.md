@@ -16,6 +16,7 @@ An [analyzer plugin](https://dart.dev/tools/analyzer-plugins) for Flutter apps.
 | `avoid_repeated_of_context` | `Theme.of(context)` twice in `build` | a local `theme` variable |
 | `avoid_media_query_of` | `MediaQuery.of(context).size`, `MediaQuery.maybeOf(context)?.padding` | `MediaQuery.sizeOf(context)`, `MediaQuery.maybePaddingOf(context)` |
 | `avoid_hardcoded_strings` | `Text('Hello')`, `Tooltip(message: 'Save')` | none |
+| `prefer_ellipsis_character` | `'Loading...'` (three dots) | `'Loading…'` |
 | `french_no_break_space` 🥖 | `'Bonjour !'`, `'Prix : 5 €'` (regular or no space before `?` `!` `;` `:` `€`) | none |
 | `french_straight_apostrophe` 🥖 | `'l’été'` (typographic apostrophe U+2019) | none |
 | `french_hyphen_only` 🥖 | `'Lun — Ven'` (em dash U+2014, en dash U+2013) | none |
@@ -245,6 +246,22 @@ Text(title)
 Not reported: literals without a letter (`'42'`), identifiers, paths and URLs (`user_id`, `logo.png`), technical parameters (`restorationId`, `Hero` tag), variables and constants, `'key'.tr()`, and test files.
 
 No quick fix: it depends on your localization setup.
+
+### `prefer_ellipsis_character`
+
+One character for the ellipsis: `…` (U+2026), not three dots.
+
+```dart
+// BAD
+const String loading = 'Loading...';
+
+// GOOD
+const String loading = 'Loading…';
+```
+
+Not reported: `RegExp` patterns, import URIs, generated files (gen-l10n and intl output included).
+
+Quick fix: replaces the three dots with `…`.
 
 ### 🇫🇷 `french_no_break_space`
 

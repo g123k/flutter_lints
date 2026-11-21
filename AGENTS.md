@@ -31,10 +31,10 @@ dart pub publish --dry-run                           # the pub.dev checks (LICEN
 - `lib/main.dart`: the entry point (the top-level `plugin` variable). Every rule is registered there with `registry.registerWarningRule` (enabled by default, unlike `registerLintRule`), and its fix with `registry.registerFixForRule` (the French typography rules and `avoid_hardcoded_strings` have no fix).
 - `lib/src/rules`: one `AnalysisRule` subclass per rule, with its `static const` diagnostic code (`LintCode`, or `FrenchTextCode` for the French typography rules).
 - `lib/src/fixes`: one `ResolvedCorrectionProducer` per quick fix.
-- `lib/src/utils/generated_files.dart`: `isGeneratedUnit`, used by rules to skip generated files.
+- `lib/src/utils/generated_files.dart`: `isGeneratedUnit`, used by rules to skip generated files (a known suffix, or a `GENERATED CODE` / intl `code generated via` header comment).
 - `lib/src/utils/flutter_elements.dart`: `isFlutterClass` (a class of the Flutter SDK, by name) and `isMediaQueryCall` (a `MediaQuery.of` / `maybeOf` call), shared by `avoid_media_query_of`, its fix and `avoid_repeated_of_context`.
 - `lib/src/utils/member_source_range.dart`: the source range of a class member with the comments that move along with it, used by the fixes that move members.
-- `lib/src/utils/string_decoder.dart`: `decodeStringLiteral`, the content of a string literal decoded into code points (escapes and surrogate pairs included) with their source range, used by the French typography rules. It never throws: a malformed escape is kept as is.
+- `lib/src/utils/string_decoder.dart`: `decodeStringLiteral`, the content of a string literal decoded into code points (escapes and surrogate pairs included) with their source range, used by the French typography rules and `prefer_ellipsis_character`. It never throws: a malformed escape is kept as is.
 - `DirectionalRule` / `DirectionalMapping` (`lib/src/rules/directional_rule.dart`): the base of the "use the directional equivalent" rules (`avoid_alignment`, `avoid_edge_insets_only`, `avoid_positioned`), all fixed by `ReplaceWithDirectional`. They do not skip generated files.
 - `FrenchTextRule` / `FrenchTextCode` (`lib/src/rules/french_text_rule.dart`): the base of the French typography rules (`french_no_break_space`, `french_straight_apostrophe`, `french_hyphen_only`), on the string literals of the `*_fr.dart` / `*_fr_<REGION>.dart` localization files. The base class targets the file (the verdict is cached per unit), decodes the literal with `decodeStringLiteral` into a `FrenchText` and calls `check`. `FrenchTextCode` is not a `LintCode` (see its dartdoc: gen-l10n's `type=lint` ignore). Other rules are standalone `AnalysisRule` subclasses.
 - `AvoidHardcodedStrings` (`lib/src/rules/avoid_hardcoded_strings.dart`): a string literal passed to a Flutter widget, `InlineSpan` or allow-listed holder constructor. The class allow list, the declared-type gate, the parameter deny lists and the content heuristics are documented in its dartdoc; the README only summarizes them.
@@ -66,7 +66,7 @@ The `FrenchTextRule` subclasses depart from the steps above:
 - Step 3: no fix. The `.arb` file is the place to fix, the generated file is overwritten.
 - Step 4: never check `isGeneratedUnit`: the generated per-locale files are the only place where the plugin sees the French strings.
 - Step 6: the "generated `part` not reported" test becomes "a `GENERATED CODE` unit reported". The shared behaviour (file targeting, decoding, `type=lint` escape) is tested once, in `test/french_straight_apostrophe_test.dart`; a new rule only tests its own characters.
-- Step 8: the triggering cases live in `example/lib/l10n/app_localizations_fr.dart` (a hand-written mimic of the gen-l10n output, with its `type=lint` header), not in `example/lib/main.dart`.
+- Step 8: the triggering cases live in `example/lib/generated/intl/messages_fr.dart` (a hand-written mimic of the intl output, with its `code generated via` header), not in `example/lib/main.dart`.
 
 ## Code style
 

@@ -110,3 +110,7 @@ class ScreenWidth extends StatelessWidget {
     return SizedBox(width: MediaQuery.of(context).size.width / 2.0);
   }
 }
+
+const String loadingMessage = 'Loading...';
+// Not reported: a RegExp pattern.
+final RegExp threeCharacters = RegExp(r'a...b');

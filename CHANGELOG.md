@@ -1,3 +1,13 @@
+## 1.2.0 (21/11/2026)
+
+### Added
+
+- `prefer_ellipsis_character`: reports three dots (`...`) in a string literal, to be written as the ellipsis character `…` (U+2026) (quick fix). Enabled by default: upgrading reports new warnings, which fail CI runs using `--fatal-warnings` until fixed, ignored or disabled (`diagnostics: prefer_ellipsis_character: false`).
+
+### Changed
+
+- Files with an intl `code generated via` header (the `messages_*.dart` files of intl / intl_utils) are now treated as generated: the rules that skip generated files no longer report them.
+
 ## 1.1.0 (31/10/2026)
 
 ### Added
